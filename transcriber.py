@@ -18,37 +18,20 @@ class StreamTranscriber:
             os.makedirs(self.temp_dir)
             
     def validate_youtube_url(self, url):
-    """Validate if the URL is a YouTube URL"""
-    # More comprehensive regex that handles various YouTube URL formats
-    youtube_regex = r'^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube(-nocookie)?\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$'
-    return bool(re.match(youtube_regex, url))
+        """Validate if the URL is a YouTube URL"""
+        # More comprehensive regex that handles various YouTube URL formats
+        youtube_regex = r'^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube(-nocookie)?\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$'
+        return bool(re.match(youtube_regex, url))
 
-# If you're having issues with youtube-dl extraction, you can also update the extract_youtube_stream_url 
-# function with a more reliable implementation:
-
-def extract_youtube_stream_url(self, youtube_url):
-    """Extract m3u8 stream URL from YouTube video or live stream"""
-    try:
-        print(f"🔍 Extracting stream URL from YouTube: {youtube_url}")
-        
-        # Try using youtube-dl with format selection for reliable extraction
-        cmd = [
-            "youtube-dl", 
-            "--format", "bestaudio/best", 
-            "--get-url",
-            "--no-warnings",
-            youtube_url
-        ]
-        
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        
-        if result.returncode != 0:
-            print(f"❌ Error extracting YouTube URL: {result.stderr}")
+    def extract_youtube_stream_url(self, youtube_url):
+        """Extract stream URL from YouTube video using yt-dlp"""
+        try:
+            print(f"🔍 Extracting stream URL from YouTube: {youtube_url}")
             
-            # Fallback method - try with a different format
+            # Using yt-dlp instead of youtube-dl
             cmd = [
-                "youtube-dl", 
-                "--format", "140/bestaudio", 
+                "yt-dlp", 
+                "--format", "bestaudio/best", 
                 "--get-url",
                 "--no-warnings",
                 youtube_url
@@ -57,24 +40,24 @@ def extract_youtube_stream_url(self, youtube_url):
             result = subprocess.run(cmd, capture_output=True, text=True)
             
             if result.returncode != 0:
-                print(f"❌ Fallback also failed: {result.stderr}")
+                print(f"❌ Error extracting YouTube URL: {result.stderr}")
                 return None
-        
-        stream_url = result.stdout.strip()
-        
-        if not stream_url:
-            print("❌ No stream URL found")
-            return None
             
-        print(f"✅ Successfully extracted stream URL")
-        return stream_url
-        
-    except Exception as e:
-        print(f"❌ Error extracting YouTube stream URL: {str(e)}")
-        return None
+            stream_url = result.stdout.strip()
+            
+            if not stream_url:
+                print("❌ No stream URL found")
+                return None
+                
+            print(f"✅ Successfully extracted stream URL")
+            return stream_url
+            
+        except Exception as e:
+            print(f"❌ Error extracting YouTube stream URL: {str(e)}")
+            return None
     
     def download_audio_from_stream(self, stream_url, duration=120, output_file=None):
-        """Download audio from a stream URL (m3u8) for specified duration"""
+        """Download audio from a stream URL for specified duration"""
         try:
             if output_file is None:
                 output_file = os.path.join(self.temp_dir, f"stream_audio_{int(time.time())}.mp3")
@@ -109,8 +92,9 @@ def extract_youtube_stream_url(self, youtube_url):
                 
             print(f"📥 Downloading audio from YouTube video: {youtube_url}")
             
+            # Use yt-dlp instead of youtube-dl
             cmd = [
-                "youtube-dl",
+                "yt-dlp",
                 "--extract-audio",
                 "--audio-format", "mp3",
                 "--audio-quality", "0",
@@ -123,7 +107,7 @@ def extract_youtube_stream_url(self, youtube_url):
             return output_file
             
         except subprocess.CalledProcessError as e:
-            print(f"❌ youtube-dl error: {str(e)}")
+            print(f"❌ yt-dlp error: {str(e)}")
             return None
         except Exception as e:
             print(f"❌ Error downloading video audio: {str(e)}")
